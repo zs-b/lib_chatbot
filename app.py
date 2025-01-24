@@ -58,8 +58,7 @@ iface = gr.Interface(
     description="Ez a chatbot válaszokat ad a könyvtárhasználati szabályzat alapján.",
     live=True,
     clear_btn="Törlés",
-    theme="compact",
-    allow_flagging="never",
+    flagging_mode="never",
     css="static/style.css"
 )
 
