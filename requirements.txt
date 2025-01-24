@@ -1,4 +1,4 @@
-flask
-flask-cors
-gunicorn
+gradio
 google-generativeai
+fuzzywuzzy
+python-dotenv
