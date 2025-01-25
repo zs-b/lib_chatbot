@@ -49,6 +49,60 @@ def chatbot_interface(user_input):
     response = ask_gemini(user_input)
     return response
 
+css = """
+.gradio-container { 
+    background-color: #BFBBA9;
+    font-family: 'Arial', sans-serif; 
+}
+
+.block { 
+    background-color: #EAE2C6;
+    border-radius: 10px; 
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+
+.gr-textbox { 
+    font-size: 16px; 
+    border: 2px solid #98D8EF; 
+    border-radius: 5px;
+}
+
+button { 
+    background-color: #98D8EF !important; 
+    color: white !important; 
+    font-size: 16px;
+    font-weight: bold;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover { 
+    background-color: #BFBBA9 !important;
+}
+
+/* Clear gomb (Törlés) */
+.gr-clear { 
+    background-color: #98D8EF !important; 
+    color: white !important; 
+    font-size: 14px;
+    font-weight: bold;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.gr-clear:hover { 
+    background-color: #BFBBA9 !important;
+}
+
+h1, h2 { 
+    color:rgb(48, 122, 149); 
+    font-size: 22px; 
+}
+"""
+
 # Gradio alkalmazás
 iface = gr.Interface(
     fn=chatbot_interface,
@@ -59,9 +113,10 @@ iface = gr.Interface(
     live=True,
     clear_btn="Törlés",
     flagging_mode="never",
-    css="static/style.css"
+    css=css
 )
 
 # Indítás
 if __name__ == "__main__":
     iface.launch()
+
