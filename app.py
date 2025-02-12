@@ -20,28 +20,53 @@ def load_data(file_path="szabalyzat.json"):
 
 data = load_data()
 
+# Szinonima térképezés
+synonyms = {
+    "nyitva tartás": "nyitvatartás",
+    "mikor van nyitva": "nyitvatartás",
+    "tagsági díj": "tagság",
+    "kölcsönzési idő": "kölcsönzés"
+}
+
 # Fuzzy keresés a szabályzatban
 def search_library_rules(query, top_n=3):
     """Kulcsszavas és fuzzy keresés a szabályzatban."""
     query = query.lower()
+    query = synonyms.get(query, query)  # Szinonima ellenőrzés
+
     titles = list(data.keys())
+
+    # Dinamikus küszöbérték
+    threshold = 70 if len(query) > 5 else 50
 
     # Fuzzy keresés a címek között
     best_matches = process.extract(query, titles, limit=top_n)
-    results = {title: data[title] for title, score in best_matches if score > 50}
+    results = {title: data[title] for title, score in best_matches if score > threshold}
 
+    # Többszintű keresés, ha nincs találat
+    if not results and threshold > 50:
+        best_matches = process.extract(query, titles, limit=top_n)
+        results = {title: data[title] for title, score in best_matches if score >= 40}
+
+    # OPAC integráció konkrét dokumentum kereséshez
     if not results:
+        if "könyv" in query or "dokumentum" in query:
+            opac_base_url = "https://opac3.kjk.qulto.eu/"
+            return f"Nem található a szabályzatban. Konkrét dokumentumok keresésére használja online katalógusunkat: {opac_base_url}{query}"
         return "A kérdésre nem található információ a szabályzatban."
-    
+
     return next(iter(results.values()))  # Az első találatot visszaadjuk
 
 # Google Gemini API hívás
 def ask_gemini(query):
     """A Gemini API használata a válasz generálásához."""
-    context = search_library_rules(query)
-    model = genai.GenerativeModel("gemini-1.5-flash")
-    response = model.generate_content(f"A könyvtár szabályzata alapján válaszolj: {context}")
-    return response.text if response else "Hiba történt a válasz generálásakor."
+    try:
+        context = search_library_rules(query)
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        response = model.generate_content(f"A könyvtár szabályzata alapján válaszolj: {context}")
+        return response.text if response else "Hiba történt a válasz generálásakor."
+    except Exception as e:
+        return f"Hiba történt: {str(e)}. Próbálja újra később."
 
 # Gradio UI
 def chatbot_interface(user_input):
@@ -82,7 +107,6 @@ button:hover {
     background-color: #BFBBA9 !important;
 }
 
-/* Clear gomb (Törlés) */
 .gr-clear { 
     background-color: #98D8EF !important; 
     color: white !important; 
@@ -112,11 +136,11 @@ iface = gr.Interface(
     description="Ez a chatbot válaszokat ad a könyvtárhasználati szabályzat alapján.",
     live=True,
     clear_btn="Törlés",
-    flagging_mode="never",
+    theme="compact",
+    allow_flagging="never",
     css=css
 )
 
 # Indítás
 if __name__ == "__main__":
     iface.launch()
-
