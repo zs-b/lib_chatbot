@@ -20,19 +20,14 @@ def load_data(file_path="szabalyzat.json"):
 
 data = load_data()
 
-# Szinonima térképezés
-synonyms = {
-    "nyitva tartás": "nyitvatartás",
-    "mikor van nyitva": "nyitvatartás",
-    "tagsági díj": "tagság",
-    "kölcsönzési idő": "kölcsönzés"
-}
-
-# Fuzzy keresés a szabályzatban
 def search_library_rules(query, top_n=3):
     """Kulcsszavas és fuzzy keresés a szabályzatban."""
     query = query.lower()
-    query = synonyms.get(query, query)  # Szinonima ellenőrzés
+
+    # Szinonima ellenőrzés helyesen
+    for key, value in synonyms.items():
+        if key in query:
+            query = query.replace(key, value)
 
     titles = list(data.keys())
 
@@ -48,7 +43,7 @@ def search_library_rules(query, top_n=3):
         best_matches = process.extract(query, titles, limit=top_n)
         results = {title: data[title] for title, score in best_matches if score >= 40}
 
-    # OPAC integráció konkrét dokumentum kereséshez
+    # OPAC integráció konkrét dokumentum kereséséhez
     if not results:
         if "könyv" in query or "dokumentum" in query:
             opac_base_url = "https://opac3.kjk.qulto.eu/"
