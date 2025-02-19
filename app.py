@@ -20,11 +20,20 @@ def load_data(file_path="szabalyzat.json"):
 
 data = load_data()
 
+# Szinonima térképezés
+synonyms = {
+    "nyitva tartás": "nyitvatartás",
+    "mikor van nyitva": "nyitvatartás",
+    "tagsági díj": "tagság",
+    "kölcsönzési idő": "kölcsönzés",
+    "cím": "elérhetőségek"
+}
+
 def search_library_rules(query, top_n=3):
     """Kulcsszavas és fuzzy keresés a szabályzatban."""
     query = query.lower()
 
-    # Szinonima ellenőrzés helyesen
+    # Szinonima ellenőrzés 
     for key, value in synonyms.items():
         if key in query:
             query = query.replace(key, value)
