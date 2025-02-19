@@ -31,12 +31,17 @@ synonyms = {
 
 def search_library_rules(query, top_n=3):
     """Kulcsszavas és fuzzy keresés a szabályzatban."""
-    query = query.lower()
+    query = query.lower().strip()
 
     # Szinonima ellenőrzés 
     for key, value in synonyms.items():
         if key in query:
             query = query.replace(key, value)
+
+    # Ha a kérdés könyv keresésére vonatkozik, irányítsuk az OPAC katalógushoz
+    if any(word in query for word in ["keresem", "könyv", "dokumentum"]):
+        opac_base_url = "https://opac3.kjk.qulto.eu/"
+        return f"A könyvtári szabályzat nem tartalmaz információt konkrét dokumentumokról. A keresett könyvet itt találhatja meg: [OPAC katalógus]({opac_base_url})"
 
     titles = list(data.keys())
 
@@ -54,18 +59,20 @@ def search_library_rules(query, top_n=3):
 
     # OPAC integráció konkrét dokumentum kereséséhez
     if not results:
-        if "könyv" in query or "dokumentum" in query:
-            opac_base_url = "https://opac3.kjk.qulto.eu/"
-            return f"Nem található a szabályzatban. Konkrét dokumentumok keresésére használja online katalógusunkat: {opac_base_url}{query}"
         return "A kérdésre nem található információ a szabályzatban."
 
     return next(iter(results.values()))  # Az első találatot visszaadjuk
 
 # Google Gemini API hívás
 def ask_gemini(query):
-    """A Gemini API használata a válasz generálásához."""
+    """A Gemini API használata a válasz generálásához, könyvkeresés figyelembe vételével."""
     try:
         context = search_library_rules(query)
+
+        # Ha az OPAC katalógus linkjét adta vissza a kereső, akkor azt adjuk vissza
+        if "opac3.kjk.qulto.eu" in context:
+            return context
+
         model = genai.GenerativeModel("gemini-1.5-flash")
         response = model.generate_content(f"A könyvtár szabályzata alapján válaszolj: {context}")
         return response.text if response else "Hiba történt a válasz generálásakor."
@@ -135,7 +142,7 @@ h1, h2 {
 iface = gr.Interface(
     fn=chatbot_interface,
     inputs=gr.Textbox(lines=2, placeholder="Írja be a kérdést...", label="Kérdés: "),
-    outputs=gr.Textbox(label="Válasz: "),
+    outputs=gr.Markdown(label="Válasz: "),
     title="Könyvtári Chatbot",    
     description="Ez a chatbot válaszokat ad a könyvtárhasználati szabályzat alapján.",
     live=True,
