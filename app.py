@@ -32,7 +32,7 @@ def search_library_rules(query, top_n=3):
     titles = list(data.keys())
 
     # Dinamikus küszöbérték
-    threshold = 70 if len(query) > 5 else 50
+    threshold = 80 if len(query) > 5 else 60
 
     # Fuzzy keresés a címek között
     best_matches = process.extract(query, titles, limit=top_n)
